@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # DHCP 服务器
+  dhcpd:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.dhcp
+    container_name: pxe-dhcp
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./configs/dhcpd.conf:/etc/dhcp/dhcpd.conf:ro
+    command: dhcpd -d -f -cf /etc/dhcp/dhcpd.conf eth0
+
+  # TFTP 服务器
+  tftpd:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.tftp
+    container_name: pxe-tftp
+    restart: unless-stopped
+    network_mode: host
+    ports:
+      - "69:69/udp"
+    volumes:
+      - ./data/tftpboot:/var/lib/tftpboot:ro
+    command: /usr/sbin/in.tftpd -L -v -v -v -s /var/lib/tftpboot
+
+  # HTTP 服务器
+  httpd:
+    image: nginx:alpine
+    container_name: pxe-http
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/iso:/usr/share/nginx/html/iso:ro
+      - ./configs/ks:/usr/share/nginx/html/ks:ro
+    networks:
+      - pxe-net
+
+networks:
+  pxe-net:
+    driver: bridge
+
+volumes:
+  tftpboot:
+  iso:

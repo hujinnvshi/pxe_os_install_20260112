@@ -1,0 +1,45 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Data directories
+data/iso/
+data/tftpboot/
+
+# Temporary files
+*.tmp
+*.bak
+*.iso
+*.img
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+
+# Docker
+.env
+
+# Certificates and keys
+*.key
+*.crt
+*.pem
+*.p12
+
+# Sensitive config
+configs/dhcpd.conf.local
+configs/ks/*-secret.cfg

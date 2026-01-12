@@ -1,0 +1,11 @@
+# DHCP 服务器 Dockerfile
+FROM centos:7
+
+RUN yum install -y dhcp && \
+    yum clean all
+
+COPY ../configs/dhcpd.conf /etc/dhcp/dhcpd.conf
+
+EXPOSE 67/udp
+
+CMD ["/usr/sbin/dhcpd", "-d", "-f", "-cf", "/etc/dhcp/dhcpd.conf"]

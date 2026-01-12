@@ -1,0 +1,100 @@
+# PXE 启动菜单配置
+# 位置: /tftpboot/pxelinux.cfg/default
+
+# 加载菜单模块
+DEFAULT menu.c32
+
+# 提示符超时时间（单位：1/10 秒，0 表示禁用）
+PROMPT 0
+
+# 菜单标题
+MENU TITLE PXE Network Boot Menu
+MENU TABMSG Press [Tab] to edit options
+
+# 默认超时时间（单位：1/10 秒）
+TIMEOUT 100
+
+# 菜单颜色配置
+MENU COLOR border 30;44 #ffffffff #00000000 std
+MENU COLOR title 1;36;44 #ffffffff #00000000 std
+MENU COLOR sel 7;37;40 #ff000000 #ffffffff all
+MENU COLOR unsel 37;44 #ffffffff #00000000 std
+
+# ============================================
+# 启动菜单项
+# ============================================
+
+# 从本地硬盘启动（默认）
+LABEL local
+    MENU LABEL ^1. Boot from local disk
+    MENU DEFAULT
+    LOCALBOOT 0
+    TEXT HELP
+    Boot from the first local hard disk.
+    This is the default option if no selection is made.
+    ENDTEXT
+
+MENU SEPARATOR
+
+# CentOS 7 自动安装
+LABEL centos7-auto
+    MENU LABEL ^2. Install CentOS 7 (Automated)
+    KERNEL centos7/vmlinuz
+    APPEND initrd=centos7/initrd.img ks=http://192.168.1.10:8080/ks/centos7-ks.cfg quiet
+    TEXT HELP
+    Install CentOS 7 with automated Kickstart configuration.
+    All settings are pre-configured and installation is fully automatic.
+    ENDTEXT
+
+# CentOS 7 手动安装
+LABEL centos7-manual
+    MENU LABEL ^3. Install CentOS 7 (Manual)
+    KERNEL centos7/vmlinuz
+    APPEND initrd=centos7/initrd.img inst.repo=http://192.168.1.10:8080/iso/centos7 quiet
+    TEXT HELP
+    Install CentOS 7 with manual configuration.
+    You will need to configure the installation manually.
+    ENDTEXT
+
+# CentOS Stream 8 自动安装
+LABEL centos8-auto
+    MENU LABEL ^4. Install CentOS Stream 8 (Automated)
+    KERNEL centos8/vmlinuz
+    APPEND initrd=centos8/initrd.img ks=http://192.168.1.10:8080/ks/centos8-ks.cfg quiet inst.nocloud=
+
+# Ubuntu 20.04 自动安装
+LABEL ubuntu2004-auto
+    MENU LABEL ^5. Install Ubuntu 20.04 LTS (Automated)
+    KERNEL ubuntu2004/vmlinuz
+    APPEND initrd=ubuntu2004/initrd.img auto=true url=http://192.168.1.10:8080/ks/ubuntu2004-preseed.cfg quiet hostname=ubuntu2004
+
+# Ubuntu 22.04 自动安装
+LABEL ubuntu2204-auto
+    MENU LABEL ^6. Install Ubuntu 22.04 LTS (Automated)
+    KERNEL ubuntu2204/vmlinuz
+    APPEND initrd=ubuntu2204/initrd.img auto=true url=http://192.168.1.10:8080/ks/ubuntu2204-preseed.cfg quiet hostname=ubuntu2204
+
+# 系统救援模式
+LABEL rescue
+    MENU LABEL ^7. System Rescue Mode
+    KERNEL centos7/vmlinuz
+    APPEND initrd=centos7/initrd.img inst.repo=http://192.168.1.10:8080/iso/centos7 rescue quiet
+
+MENU SEPARATOR
+
+# 内存测试
+LABEL memtest86
+    MENU LABEL ^M. Memory Test (Memtest86+)
+    KERNEL memtest86
+
+# 重新启动
+LABEL reboot
+    MENU LABEL ^R. Reboot System
+    KERNEL reboot.c32
+
+# 关机
+LABEL poweroff
+    MENU LABEL ^P. Power Off System
+    KERNEL poweroff.com
+
+MENU END
