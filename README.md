@@ -4,13 +4,13 @@
 
 ## 功能特性
 
-- 支持 PXE 网络引导启动
-- 支持 CentOS/RHEL/Ubuntu/Debian 等多个系统
-- 支持完全自动化安装（通过 Kickstart/Preseed）
-- 支持自定义分区、网络配置、软件包选择
-- 支持 MAC 地址绑定，为不同机器定制配置
-- 提供一键部署脚本和 Docker 部署方式
-- 提供 Web 管理界面（可选）
+- ✅ 支持 PXE 网络引导启动
+- ✅ 支持 CentOS/RHEL 7/8/9 系统（Kickstart）
+- ✅ 支持 Ubuntu 20.04/22.04 系统（Preseed）
+- ✅ 完全自动化安装配置
+- ✅ 支持自定义分区、网络配置、软件包选择
+- ✅ 支持 MAC 地址绑定，为不同机器定制配置
+- ✅ 提供一键部署脚本和 Docker 部署方式
 
 ## 系统架构
 
@@ -42,33 +42,32 @@
 
 ```
 pxe_os_install_20260112/
-├── README.md              # 项目说明文档
-├── docker-compose.yml     # Docker 编排文件
-├── scripts/               # 部署和管理脚本
-│   ├── install.sh        # 一键安装脚本
-│   ├── setup.sh          # 初始化配置脚本
-│   ├── add_iso.sh        # 添加系统 ISO
-│   └── gen_ks.sh         # 生成 Kickstart 配置
-├── configs/              # 配置文件模板
-│   ├── dhcpd.conf       # DHCP 配置模板
-│   ├── default          # PXE 启动菜单模板
-│   ├── nginx.conf       # Nginx 配置
-│   └── ks/              # Kickstart 配置模板
-│       ├── centos7-ks.cfg
-│       ├── centos8-ks.cfg
-│       └── ubuntu20-ks.cfg
-├── docker/              # Docker 相关文件
-│   ├── Dockerfile.dhcp
-│   ├── Dockerfile.tftp
-│   └── Dockerfile.http
-├── templates/           # 其他配置模板
-│   └── ...
-├── docs/                # 文档
-│   ├── ARCHITECTURE.md   # 架构说明
-│   ├── INSTALL.md        # 安装指南
-│   └── USAGE.md          # 使用指南
-└── tests/               # 测试脚本
-    └── test_pxe.sh
+├── README.md                 # 项目说明文档
+├── Docker-QUICKSTART.md      # Docker 部署快速开始
+├── docker-compose.yml        # Docker 编排文件
+├── scripts/                  # 部署和管理脚本
+│   ├── install.sh           # 一键安装脚本（本地部署）
+│   ├── prepare_docker.sh    # Docker 数据准备脚本
+│   ├── add_iso.sh           # 添加系统 ISO
+│   └── gen_ks.sh            # 生成加密密码
+├── configs/                  # 配置文件
+│   ├── dhcpd.conf           # DHCP 配置模板
+│   ├── default              # PXE 启动菜单
+│   ├── nginx.conf           # HTTP 服务器配置
+│   └── ks/                  # Kickstart/Preseed 配置
+│       ├── centos7-ks.cfg   # CentOS 7
+│       ├── centos8-ks.cfg   # CentOS 8/Rocky/AlmaLinux
+│       ├── ubuntu2004-preseed.cfg  # Ubuntu 20.04
+│       └── ubuntu2204-preseed.cfg  # Ubuntu 22.04
+├── docker/                   # Docker 文件
+│   ├── Dockerfile.dhcp      # DHCP 容器
+│   └── Dockerfile.tftp      # TFTP 容器
+├── data/                     # 数据目录（Docker 部署时创建）
+│   ├── tftpboot/            # TFTP 引导文件
+│   └── iso/                 # ISO 镜像
+└── docs/                     # 文档
+    ├── ARCHITECTURE.md       # 架构说明
+    └── INSTALL.md            # 安装指南
 ```
 
 ## 快速开始
@@ -77,19 +76,27 @@ pxe_os_install_20260112/
 
 ```bash
 # 1. 克隆项目
-git clone <repo_url>
+git clone https://github.com/hujinnvshi/pxe_os_install_20260112.git
 cd pxe_os_install_20260112
 
-# 2. 准备 ISO 文件
-mkdir -p data/iso
-cp /path/to/CentOS-7-x86_64-Minimal.iso data/iso/
+# 2. 准备 Docker 数据
+./scripts/prepare_docker.sh
 
-# 3. 启动所有服务
+# 3. 添加系统 ISO
+./scripts/add_iso.sh /path/to/CentOS-7-x86_64-Minimal.iso centos 7
+
+# 4. 修改网络配置
+vim configs/dhcpd.conf    # 修改 IP 地址和网关
+vim configs/default       # 修改 HTTP URL 中的 IP
+
+# 5. 启动所有服务
 docker-compose up -d
 
-# 4. 查看日志
+# 6. 查看日志
 docker-compose logs -f
 ```
+
+详细说明请查看：[Docker-QUICKSTART.md](Docker-QUICKSTART.md)
 
 ### 方式二：本地安装
 
@@ -234,6 +241,36 @@ curl http://192.168.1.10/ks/centos7-ks.cfg
 
 # 检查 Nginx 配置
 sudo nginx -t
+```
+
+## ⚙️ 配置提示
+
+**重要：使用前必须修改网络配置！**
+
+本项目配置文件使用示例 IP 地址 `192.168.1.10`，部署前需要修改为你的实际网络环境：
+
+### 需要修改的配置文件
+
+1. **configs/dhcpd.conf** - DHCP 配置
+   - 修改 `subnet` 为你的网段
+   - 修改 `range` IP 地址池
+   - 修改 `option routers` 网关地址
+   - 修改 `next-server` 为你的 PXE 服务器 IP
+
+2. **configs/default** - PXE 启动菜单
+   - 将所有 `http://192.168.1.10:8080` 改为你的服务器 IP
+
+3. **configs/ks/*.cfg** - Kickstart/Preseed 配置
+   - 将所有 `http://192.168.1.10:8080` 改为你的服务器 IP
+
+4. **scripts/add_iso.sh** - ISO 添加脚本
+   - 修改 `HTTP_URL_PREFIX` 为你的服务器 IP
+
+### 快速替换方法
+
+```bash
+# 将所有 192.168.1.10 替换为你的 IP（例如 172.16.48.112）
+find . -type f \( -name "*.conf" -o -name "*.cfg" -o -name "*.sh" \) -exec sed -i 's/192.168.1.10/172.16.48.112/g' {} +
 ```
 
 ## 开发计划
